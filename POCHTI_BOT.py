@@ -83,6 +83,24 @@ dict_finish = {}
 
 @bot.message_handler(commands=['result'])
 def start(message):
+# Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
+# И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
+    if len(result_start) >= 1 and len(result_stop) >= 1:
+        for number, key in enumerate(result_start, 0):
+            for number2, key2 in enumerate(result_stop, 0):
+                if key == key2: # сверяет ключи
+                    dict_stopday = {}
+                    # Ниже добовляем в clen_словарь ключ stop_day со значением выданным черз .get
+                    dict_stopday.update(stop_day=f"{list(result_stop.values())[number2].get('stop_day')}")
+                    full_val = list(result_start.values())[number]  # Все данные из result_start
+                    full_val.update(dict_stopday)                   # <- что бы потом к ним добавить stop_day
+                    # Ниже совмещаем все данные из двух словорей, и записываем в итоговый словрь
+                    for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
+                        res = {key: full_val}    # Формируем id : full val
+                        dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
+        open(f'result_finish {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
+            f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
+
     bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets.')
     for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
         google_file.update(f'A{2+i}:D20', [[list(dict_finish.values())[0+i]['name'],
@@ -90,6 +108,7 @@ def start(message):
                                             list(dict_finish.values())[0+i]['start_day'],
                                             list(dict_finish.values())[0+i]['stop_day']]])
         time.sleep(2)
+
 
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
@@ -124,26 +143,6 @@ def handle_text(message):
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
     open(f'Work_time_backup {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
         f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}\n {result_stop}\n')
-
-    # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
-    # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
-
-    if now_time.strftime("%H-%M") > '18-30' or now_time.strftime("%H-%M") < '07-30':
-        if len(result_start) >= 1 and len(result_stop) >= 1:
-            for number, key in enumerate(result_start, 0):
-                for number2, key2 in enumerate(result_stop, 0):
-                    if key == key2: # сверяет ключи
-                        dict_stopday = {}
-                        # Ниже добовляем в clen_словарь ключ stop_day со значением выданным черз .get
-                        dict_stopday.update(stop_day=f"{list(result_stop.values())[number2].get('stop_day')}")
-                        full_val = list(result_start.values())[number]  # Все данные из result_start
-                        full_val.update(dict_stopday)                   # <- что бы потом к ним добавить stop_day
-                        # Ниже совмещаем все данные из двух словорей, и записываем в итоговый словрь
-                        for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
-                            res = {key: full_val}    # Формируем id : full val
-                            dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
-            open(f'result_finish {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
-                f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
 
 
 bot.polling(none_stop=True)
