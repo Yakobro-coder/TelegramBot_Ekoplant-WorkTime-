@@ -31,20 +31,6 @@ TOKEN = '1612615932:AAHMLr1gupXExX349BziuVFZRu0eSF7yLfs'
 bot = telebot.TeleBot(TOKEN)
 
 
-gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
-scopes = [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
-]
-credentials = Credentials.from_service_account_file(
-    'pythontelegrabotektoplan-dbb9bff2c140.json',
-    scopes=scopes
-)
-gc = gspread.authorize(credentials)
-# Open a sheet from a spreadsheet in one go
-google_file = gc.open("Экоплант(WorkBot)").sheet1
-
-
 @bot.message_handler(commands=['help'])
 def start(message):
     bot.send_message(message.chat.id, helper_text)
@@ -83,6 +69,19 @@ dict_finish = {}
 
 @bot.message_handler(commands=['result'])
 def start(message):
+    gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
+    scopes = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    credentials = Credentials.from_service_account_file(
+        'pythontelegrabotektoplan-dbb9bff2c140.json',
+        scopes=scopes
+    )
+    gc = gspread.authorize(credentials)
+    # Open a sheet from a spreadsheet in one go
+    google_file = gc.open("Экоплант(WorkBot)").sheet1
+
 # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
 # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
     now_time = datetime.datetime.today()
