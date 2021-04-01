@@ -85,6 +85,7 @@ dict_finish = {}
 def start(message):
 # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
 # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
+    now_time = datetime.datetime.today()
     if len(result_start) >= 1 and len(result_stop) >= 1:
         for number, key in enumerate(result_start, 0):
             for number2, key2 in enumerate(result_stop, 0):
