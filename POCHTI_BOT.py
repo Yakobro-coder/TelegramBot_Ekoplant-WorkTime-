@@ -99,12 +99,12 @@ def start(message):
             {
                 "mergeCells": {
                     "mergeType": "MERGE_ALL",
-                    "range": {  # In this sample script, all cells of "A4:D4" of "Sheet1" are merged.
+                    "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
                         "sheetId": sheetId,
                         "startRowIndex": numb - 1,
                         "endRowIndex": numb,
                         "startColumnIndex": 0,
-                        "endColumnIndex": 4
+                        "endColumnIndex": 3
                     }
                 }
             }
@@ -113,7 +113,7 @@ def start(message):
     res = ss.batch_update(body)
     # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
     google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
-    google_file.format(f"A{numb}:D{numb}", {
+    google_file.format(f"A{numb}:C{numb}", {
         "backgroundColor": {
             "red": 0.750,
             "green": 0.900,
@@ -148,16 +148,15 @@ def start(message):
                     for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
                         res = {key: full_val}  # Формируем id : full val
                         dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
-        open(f'result_finish {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
+        open(f'result_finish_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
             f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
 
     google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
 
     for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
-        google_file.update(f'A{numb+1+i}:D3000', [[list(dict_finish.values())[0+i]['name'],
-                                                 list(dict_finish.values())[0+i]['data'],
-                                                 list(dict_finish.values())[0+i]['start_day'],
-                                                 list(dict_finish.values())[0+i]['stop_day']]])
+        google_file.update(f'A{numb+1+i}:C3000', [[list(dict_finish.values())[0+i]['name'],
+                                                   list(dict_finish.values())[0+i]['start_day'],
+                                                   list(dict_finish.values())[0+i]['stop_day']]])
         time.sleep(2)
 
 
@@ -175,8 +174,8 @@ def handle_text(message):
         source_language_menu.row('/help')
         bot.send_message(message.chat.id, text_vivod, reply_markup=source_language_menu)
         dict_one = {message.chat.id: {'name': f'{message.chat.first_name} {message.chat.last_name}',
-                                      'data': value.strftime("%d-%m-%Y"),
-                                      'start_day': value.strftime("%d-%m-%Y %H:%M:%S")}}
+                                      'data': value.strftime("%d.%m.%Y"),
+                                      'start_day': value.strftime("%H:%M")}}
         result_start.update(dict_one)
         print(result_start)
     elif message.text == 'Окончить рабочий день!':
@@ -186,13 +185,13 @@ def handle_text(message):
         bot.send_message(message.chat.id, f'Хорошая работа;) Рабочий день окончен в {value.strftime("%H:%M:%S")}.',
                          reply_markup=start_menu)
         dict_two = {message.chat.id: {'name': f'{message.chat.first_name} {message.chat.last_name}',
-                                      'stop_day': value.strftime("%d-%m-%Y %H:%M:%S")}}
+                                      'stop_day': value.strftime("%H:%M")}}
         result_stop.update(dict_two)
         print(result_stop)
 
     now_time = datetime.datetime.today()
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
-    open(f'Work_time_backup {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
+    open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
         f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}\n {result_stop}\n')
 
 
