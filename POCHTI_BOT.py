@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 
 
 hello_text = """Приветствую, я ЭкоплантБОТ для учёта рабочего времени.
-Как вас зовут, что бы я мог записать ваши рабочие часы.
+
 """
 
 helper_text = """Я ЭкоплантБОТ для учёта рабочего времени.
@@ -27,27 +27,24 @@ helper_text = """Я ЭкоплантБОТ для учёта рабочего в
 """
 
 
-TOKEN = '1612615932:AAHMLr1gupXExX349BziuVFZRu0eSF7yLfs'
+TOKEN = '1612615932:AAEEagVHgJohJWf4FyPDm6vXzhXjZby5exs'
 bot = telebot.TeleBot(TOKEN)
+
+
+@bot.message_handler(commands=['help'])
+def start(message):
+    bot.send_message(message.chat.id, helper_text)
 
 
 @bot.message_handler(commands=['testwork'])
 def start(message):
     bot.send_message(message.chat.id, 'Бот в сети! Бот работает!')
 
-@bot.message_handler(commands=['help'])
-def start(message):
-    bot.send_message(message.chat.id, helper_text)
 
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(message, f'{hello_text}')
-    sent = bot.send_message(message.chat.id, 'Введите пожалуйста ОЧЕНЬ внимательно ваши ФИО! :)')
-    bot.register_next_step_handler(sent, menu)
-
-
-def menu(message):
-    message_input_name = f"""Спасибо {message.text}! Теперь вам доступен БОТ для учёта рабочего времени. Ниже у вас появилась кнопка: 
+    message_input_name = f"""Теперь вам доступен БОТ для учёта рабочего времени. Ниже у вас появилась кнопка: 
 
 - "Приступить к работе." - для отметки начала рабочего дня.
 
@@ -66,13 +63,14 @@ def menu(message):
     bot.send_message(message.chat.id, message_input_name, reply_markup=start_menu)
 
 
-
 result_start = {}
 result_stop = {}
 dict_finish = {}
 
 @bot.message_handler(commands=['result'])
 def start(message):
+    bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets. Результат выгрузки займёт '
+                                      'около 10-15сек.')
     gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
@@ -88,6 +86,7 @@ def start(message):
 
     # Показывает номер первой пустой строки проверев документ.
     numb = (len(google_file.get_all_values()) + 1)
+    print(numb)
 
     # Объеденяет ячейку в одну
     spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
@@ -114,7 +113,7 @@ def start(message):
     res = ss.batch_update(body)
     # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
     google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
-    google_file.format("A4:D4", {
+    google_file.format(f"A{numb}:D{numb}", {
         "backgroundColor": {
             "red": 0.750,
             "green": 0.900,
@@ -132,30 +131,30 @@ def start(message):
             "bold": True
         }
     })
-    google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
 
-# Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
-# И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
+    # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
+    # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
     now_time = datetime.datetime.today()
     if len(result_start) >= 1 and len(result_stop) >= 1:
         for number, key in enumerate(result_start, 0):
             for number2, key2 in enumerate(result_stop, 0):
-                if key == key2: # сверяет ключи
+                if key == key2:  # сверяет ключи
                     dict_stopday = {}
                     # Ниже добовляем в clen_словарь ключ stop_day со значением выданным черз .get
                     dict_stopday.update(stop_day=f"{list(result_stop.values())[number2].get('stop_day')}")
                     full_val = list(result_start.values())[number]  # Все данные из result_start
-                    full_val.update(dict_stopday)                   # <- что бы потом к ним добавить stop_day
+                    full_val.update(dict_stopday)  # <- что бы потом к ним добавить stop_day
                     # Ниже совмещаем все данные из двух словорей, и записываем в итоговый словрь
                     for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
-                        res = {key: full_val}    # Формируем id : full val
+                        res = {key: full_val}  # Формируем id : full val
                         dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
         open(f'result_finish {now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
             f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
 
-    bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets.')
+    google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
+
     for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
-        google_file.update(f'A{numb+1}:D3000', [[list(dict_finish.values())[0+i]['name'],
+        google_file.update(f'A{numb+1+i}:D3000', [[list(dict_finish.values())[0+i]['name'],
                                                  list(dict_finish.values())[0+i]['data'],
                                                  list(dict_finish.values())[0+i]['start_day'],
                                                  list(dict_finish.values())[0+i]['stop_day']]])
