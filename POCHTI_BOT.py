@@ -31,6 +31,10 @@ TOKEN = '1612615932:AAHMLr1gupXExX349BziuVFZRu0eSF7yLfs'
 bot = telebot.TeleBot(TOKEN)
 
 
+@bot.message_handler(commands=['testwork'])
+def start(message):
+    bot.send_message(message.chat.id, 'Бот в сети! Бот работает!')
+
 @bot.message_handler(commands=['help'])
 def start(message):
     bot.send_message(message.chat.id, helper_text)
@@ -82,6 +86,54 @@ def start(message):
     # Open a sheet from a spreadsheet in one go
     google_file = gc.open("Экоплант(WorkBot)").sheet1
 
+    # Показывает номер первой пустой строки проверев документ.
+    numb = (len(google_file.get_all_values()) + 1)
+
+    # Объеденяет ячейку в одну
+    spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
+    sheetName = "Лист номер один"
+    client = gspread.authorize(credentials)
+    ss = client.open_by_key(spreadsheetId)
+    sheetId = ss.worksheet(sheetName)._properties['sheetId']
+    body = {
+        "requests": [
+            {
+                "mergeCells": {
+                    "mergeType": "MERGE_ALL",
+                    "range": {  # In this sample script, all cells of "A4:D4" of "Sheet1" are merged.
+                        "sheetId": sheetId,
+                        "startRowIndex": numb - 1,
+                        "endRowIndex": numb,
+                        "startColumnIndex": 0,
+                        "endColumnIndex": 4
+                    }
+                }
+            }
+        ]
+    }
+    res = ss.batch_update(body)
+    # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
+    google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
+    google_file.format("A4:D4", {
+        "backgroundColor": {
+            "red": 0.750,
+            "green": 0.900,
+            "blue": 0.750,
+            "alpha": 1.0
+        },
+        "horizontalAlignment": "CENTER",
+        "textFormat": {
+            "foregroundColor": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0
+            },
+            "fontSize": 10,
+            "bold": True
+        }
+    })
+    google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
+
 # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
 # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
     now_time = datetime.datetime.today()
@@ -103,10 +155,10 @@ def start(message):
 
     bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets.')
     for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
-        google_file.update(f'A{2+i}:D20', [[list(dict_finish.values())[0+i]['name'],
-                                            list(dict_finish.values())[0+i]['data'],
-                                            list(dict_finish.values())[0+i]['start_day'],
-                                            list(dict_finish.values())[0+i]['stop_day']]])
+        google_file.update(f'A{numb+1}:D3000', [[list(dict_finish.values())[0+i]['name'],
+                                                 list(dict_finish.values())[0+i]['data'],
+                                                 list(dict_finish.values())[0+i]['start_day'],
+                                                 list(dict_finish.values())[0+i]['stop_day']]])
         time.sleep(2)
 
 
