@@ -37,6 +37,11 @@ def start(message):
     bot.send_message(message.chat.id, helper_text)
 
 
+@bot.message_handler(commands=['exel'])
+def start(message):
+    bot.send_message(message.chat.id, 'https://docs.google.com/spreadsheets/d/1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838/edit#gid=0')
+
+
 @bot.message_handler(commands=['testwork'])
 def start(message):
     bot.send_message(message.chat.id, 'Бот в сети! Бот работает!')
@@ -120,10 +125,6 @@ def handle_text(message):
         f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
 
 
-    bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets. Результат выгрузки займёт '
-                                      'около 10-15сек.')
-    bot.send_message(message.chat.id, 'https://docs.google.com/spreadsheets/d/'
-                                      '1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838/edit#gid=0')
     gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
