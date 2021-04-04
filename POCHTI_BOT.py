@@ -9,6 +9,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 
+
 hello_text = """Приветствую, я ЭкоплантБОТ для учёта рабочего времени.
 
 """
@@ -67,10 +68,13 @@ result_start = {}
 result_stop = {}
 dict_finish = {}
 
+
 @bot.message_handler(commands=['result'])
 def start(message):
     bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets. Результат выгрузки займёт '
                                       'около 10-15сек.')
+    bot.send_message(message.chat.id, 'https://docs.google.com/spreadsheets/d/'
+                                      '1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838/edit#gid=0')
     gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
@@ -87,6 +91,7 @@ def start(message):
     # Показывает номер первой пустой строки проверев документ.
     numb = (len(google_file.get_all_values()) + 1)
     print(numb)
+
 
     # Объеденяет ячейку в одну
     spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
@@ -135,7 +140,7 @@ def start(message):
     # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
     # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
     now_time = datetime.datetime.today()
-    if len(result_start) >= 1 and len(result_stop) >= 1:
+    if len(result_start) >= 2 and len(result_stop) > (len(result_start) // 2):
         for number, key in enumerate(result_start, 0):
             for number2, key2 in enumerate(result_stop, 0):
                 if key == key2:  # сверяет ключи
@@ -150,14 +155,22 @@ def start(message):
                         dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
         open(f'result_finish_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
             f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
+        print(list(dict_finish.values())[0]['data'])
+        google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
 
-    google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
+        for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
+            google_file.update(f'A{numb+1+i}:C3000', [[list(dict_finish.values())[0+i]['name'],
+                                                       list(dict_finish.values())[0+i]['start_day'],
+                                                       list(dict_finish.values())[0+i]['stop_day']]])
+            time.sleep(2)
 
-    for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
-        google_file.update(f'A{numb+1+i}:C3000', [[list(dict_finish.values())[0+i]['name'],
-                                                   list(dict_finish.values())[0+i]['start_day'],
-                                                   list(dict_finish.values())[0+i]['stop_day']]])
-        time.sleep(2)
+    elif len(result_start) > 0 and len(result_stop) <= (len(result_start) // 2):
+        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
+            google_file.update(f'A{numb+1+i}:C3000', [[list(result_start.values())[0+i]['name'],
+                                                       list(result_start.values())[0+i]['start_day']]])
+            time.sleep(2)
+
 
 
 @bot.message_handler(content_types=['text'])
@@ -165,10 +178,12 @@ def handle_text(message):
     timestamp = message.date                            # Дата получения сообщение в виле unix
     value = datetime.datetime.fromtimestamp(timestamp)  # Перевод их unix в нормФормат
 
+
     dict_one = {}
     text_vivod = f'Отлично, вы приступили к работе в {value.strftime("%H:%M:%S")}!' \
                  f' Не забудьте в конце дня, отметиться о завершении рабочего дня.'
-    if message.text == 'Приступить к работе':
+
+    if message.text == 'Приступить к работе' and message.chat.id not in result_start.keys():
         source_language_menu = types.ReplyKeyboardMarkup(True, True)
         source_language_menu.row('Окончить рабочий день!')
         source_language_menu.row('/help')
@@ -178,6 +193,9 @@ def handle_text(message):
                                       'start_day': value.strftime("%H:%M")}}
         result_start.update(dict_one)
         print(result_start)
+    elif message.text == 'Приступить к работе' and message.chat.id in result_start.keys():
+        bot.send_message(message.chat.id, 'Вы не можете дважды за день приступить к началу рабочего дня.')
+
     elif message.text == 'Окончить рабочий день!':
         start_menu = types.ReplyKeyboardMarkup(True, True)
         start_menu.row('Приступить к работе')
@@ -193,6 +211,7 @@ def handle_text(message):
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
     open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
         f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}\n {result_stop}\n')
+
 
 
 bot.polling(none_stop=True)
