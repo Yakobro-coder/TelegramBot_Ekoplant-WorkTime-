@@ -89,87 +89,127 @@ def start(message):
     google_file = gc.open("Экоплант(WorkBot)").sheet1
 
     # Показывает номер первой пустой строки проверев документ.
-    numb = (len(google_file.get_all_values()) + 1)
+    numb = 2
+    # numb = (len(google_file.get_all_values()) + 1)
     print(numb)
 
 
-    # Объеденяет ячейку в одну
-    spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
-    sheetName = "Лист номер один"
-    client = gspread.authorize(credentials)
-    ss = client.open_by_key(spreadsheetId)
-    sheetId = ss.worksheet(sheetName)._properties['sheetId']
-    body = {
-        "requests": [
-            {
-                "mergeCells": {
-                    "mergeType": "MERGE_ALL",
-                    "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
-                        "sheetId": sheetId,
-                        "startRowIndex": numb - 1,
-                        "endRowIndex": numb,
-                        "startColumnIndex": 0,
-                        "endColumnIndex": 3
+    if google_file.acell(f'A{numb}').value == list(result_start.values())[0]['data']:
+        # Объеденяет ячейку в одну
+        spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
+        sheetName = "Лист номер один"
+        client = gspread.authorize(credentials)
+        ss = client.open_by_key(spreadsheetId)
+        sheetId = ss.worksheet(sheetName)._properties['sheetId']
+        body = {
+            "requests": [
+                {
+                    "mergeCells": {
+                        "mergeType": "MERGE_ALL",
+                        "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
+                            "sheetId": sheetId,
+                            "startRowIndex": numb - 1,
+                            "endRowIndex": numb,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 3
+                        }
                     }
                 }
-            }
-        ]
-    }
-    res = ss.batch_update(body)
-    # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
-    google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
-    google_file.format(f"A{numb}:C{numb}", {
-        "backgroundColor": {
-            "red": 0.750,
-            "green": 0.900,
-            "blue": 0.750,
-            "alpha": 1.0
-        },
-        "horizontalAlignment": "CENTER",
-        "textFormat": {
-            "foregroundColor": {
-                "red": 0.0,
-                "green": 0.0,
-                "blue": 0.0
-            },
-            "fontSize": 10,
-            "bold": True
+            ]
         }
-    })
+        res = ss.batch_update(body)
+        # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
+        google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
+        google_file.format(f"A{numb}:C{numb}", {
+            "backgroundColor": {
+                "red": 0.750,
+                "green": 0.900,
+                "blue": 0.750,
+                "alpha": 1.0
+            },
+            "horizontalAlignment": "CENTER",
+            "textFormat": {
+                "foregroundColor": {
+                    "red": 0.0,
+                    "green": 0.0,
+                    "blue": 0.0
+                },
+                "fontSize": 10,
+                "bold": True
+            }
+        })
 
-    # Переберает два словоря, сверяя их по ключу, создаёт новый словарь, где добовляет в словрь СТАРТ, значение 'stop-day'
-    # И выводит итоговый словарь, где {id : { name, data, start_day, stop_day}
-    now_time = datetime.datetime.today()
-    if len(result_start) >= 2 and len(result_stop) > (len(result_start) // 2):
-        for number, key in enumerate(result_start, 0):
-            for number2, key2 in enumerate(result_stop, 0):
-                if key == key2:  # сверяет ключи
-                    dict_stopday = {}
-                    # Ниже добовляем в clen_словарь ключ stop_day со значением выданным черз .get
-                    dict_stopday.update(stop_day=f"{list(result_stop.values())[number2].get('stop_day')}")
-                    full_val = list(result_start.values())[number]  # Все данные из result_start
-                    full_val.update(dict_stopday)  # <- что бы потом к ним добавить stop_day
-                    # Ниже совмещаем все данные из двух словорей, и записываем в итоговый словрь
-                    for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
-                        res = {key: full_val}  # Формируем id : full val
-                        dict_finish.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
-        open(f'result_finish_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
-            f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {dict_finish}\n')
-        print(list(dict_finish.values())[0]['data'])
-        google_file.update(f'A{numb}', [[list(dict_finish.values())[0]['data']]])
-
-        for i in range(0, len(dict_finish)):  # Вроде как записвает все данные в Google Sheets
-            google_file.update(f'A{numb+1+i}:C3000', [[list(dict_finish.values())[0+i]['name'],
-                                                       list(dict_finish.values())[0+i]['start_day'],
-                                                       list(dict_finish.values())[0+i]['stop_day']]])
-            time.sleep(2)
-
-    elif len(result_start) > 0 and len(result_stop) <= (len(result_start) // 2):
         google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        print((result_start.values()))
         for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
-            google_file.update(f'A{numb+1+i}:C3000', [[list(result_start.values())[0+i]['name'],
-                                                       list(result_start.values())[0+i]['start_day']]])
-            time.sleep(2)
+            if len(list(result_start.values())[0+i]) == 3:
+                google_file.update(f'A{numb+1+i}:C3000', [[list(result_start.values())[0+i]['name'],
+                                                           list(result_start.values())[0+i]['start_day']]])
+                time.sleep(2)
+            else:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day'],
+                                                               list(result_start.values())[0 + i]['stop_day']]])
+                time.sleep(2)
+    elif google_file.acell(f'A{numb}').value != list(result_start.values())[0]['data']:
+        numb = (len(google_file.get_all_values()) + 1)
+        # Объеденяет ячейку в одну
+        spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
+        sheetName = "Лист номер один"
+        client = gspread.authorize(credentials)
+        ss = client.open_by_key(spreadsheetId)
+        sheetId = ss.worksheet(sheetName)._properties['sheetId']
+        body = {
+            "requests": [
+                {
+                    "mergeCells": {
+                        "mergeType": "MERGE_ALL",
+                        "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
+                            "sheetId": sheetId,
+                            "startRowIndex": numb - 1,
+                            "endRowIndex": numb,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 3
+                        }
+                    }
+                }
+            ]
+        }
+        res = ss.batch_update(body)
+        # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
+        google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
+        google_file.format(f"A{numb}:C{numb}", {
+            "backgroundColor": {
+                "red": 0.750,
+                "green": 0.900,
+                "blue": 0.750,
+                "alpha": 1.0
+            },
+            "horizontalAlignment": "CENTER",
+            "textFormat": {
+                "foregroundColor": {
+                    "red": 0.0,
+                    "green": 0.0,
+                    "blue": 0.0
+                },
+                "fontSize": 10,
+                "bold": True
+            }
+        })
+
+        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        print((result_start.values()))
+        for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
+            if len(list(result_start.values())[0 + i]) == 3:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day']]])
+                time.sleep(2)
+            else:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day'],
+                                                               list(result_start.values())[0 + i]['stop_day']]])
+                time.sleep(2)
+
 
 
 
@@ -202,16 +242,165 @@ def handle_text(message):
         start_menu.row('/help')
         bot.send_message(message.chat.id, f'Хорошая работа;) Рабочий день окончен в {value.strftime("%H:%M:%S")}.',
                          reply_markup=start_menu)
-        dict_two = {message.chat.id: {'name': f'{message.chat.first_name} {message.chat.last_name}',
-                                      'stop_day': value.strftime("%H:%M")}}
+        dict_two = {message.chat.id: {'stop_day': value.strftime("%H:%M")}}
         result_stop.update(dict_two)
-        print(result_stop)
+        for number, key in enumerate(result_start, 0):
+            for number2, key2 in enumerate(result_stop, 0):
+                if key == key2:  # сверяет ключи
+                    dict_stopday = {}
+                    # Ниже добовляем в clen_словарь ключ stop_day со значением выданным черз .get
+                    dict_stopday.update(stop_day=f"{list(result_stop.values())[number2].get('stop_day')}")
+                    full_val = list(result_start.values())[number]  # Все данные из result_start
+                    full_val.update(dict_stopday)  # <- что бы потом к ним добавить stop_day
+                    # Ниже совмещаем все данные из двух словорей, и записываем в итоговый словрь
+                    for i in range(1, len(result_start.values())):  # ^| вида {id : { name, data, start_day, stop_day}
+                        res = {key: full_val}  # Формируем id : full val
+                        result_start.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
+        print(result_start)
 
     now_time = datetime.datetime.today()
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
     open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
-        f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}\n {result_stop}\n')
+        f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
 
+    bot.send_message(message.chat.id, 'Запущена выгрузка данных в Google Sheets. Результат выгрузки займёт '
+                                      'около 10-15сек.')
+    bot.send_message(message.chat.id, 'https://docs.google.com/spreadsheets/d/'
+                                      '1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838/edit#gid=0')
+    gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
+    scopes = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    credentials = Credentials.from_service_account_file(
+        'pythontelegrabotektoplan-dbb9bff2c140.json',
+        scopes=scopes
+    )
+    gc = gspread.authorize(credentials)
+    # Open a sheet from a spreadsheet in one go
+    google_file = gc.open("Экоплант(WorkBot)").sheet1
+
+    # Показывает номер первой пустой строки проверев документ.
+    numb = 2
+    # numb = (len(google_file.get_all_values()) + 1)
+    print(numb)
+
+
+    if google_file.acell(f'A{numb}').value == list(result_start.values())[0]['data']:
+        # Объеденяет ячейку в одну
+        spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
+        sheetName = "Лист номер один"
+        client = gspread.authorize(credentials)
+        ss = client.open_by_key(spreadsheetId)
+        sheetId = ss.worksheet(sheetName)._properties['sheetId']
+        body = {
+            "requests": [
+                {
+                    "mergeCells": {
+                        "mergeType": "MERGE_ALL",
+                        "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
+                            "sheetId": sheetId,
+                            "startRowIndex": numb - 1,
+                            "endRowIndex": numb,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 3
+                        }
+                    }
+                }
+            ]
+        }
+        res = ss.batch_update(body)
+        # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
+        google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
+        google_file.format(f"A{numb}:C{numb}", {
+            "backgroundColor": {
+                "red": 0.750,
+                "green": 0.900,
+                "blue": 0.750,
+                "alpha": 1.0
+            },
+            "horizontalAlignment": "CENTER",
+            "textFormat": {
+                "foregroundColor": {
+                    "red": 0.0,
+                    "green": 0.0,
+                    "blue": 0.0
+                },
+                "fontSize": 10,
+                "bold": True
+            }
+        })
+
+        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        print((result_start.values()))
+        for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
+            if len(list(result_start.values())[0+i]) == 3:
+                google_file.update(f'A{numb+1+i}:C3000', [[list(result_start.values())[0+i]['name'],
+                                                           list(result_start.values())[0+i]['start_day']]])
+                time.sleep(2)
+            else:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day'],
+                                                               list(result_start.values())[0 + i]['stop_day']]])
+                time.sleep(2)
+    elif google_file.acell(f'A{numb}').value != list(result_start.values())[0]['data']:
+        numb = (len(google_file.get_all_values()) + 1)
+        # Объеденяет ячейку в одну
+        spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
+        sheetName = "Лист номер один"
+        client = gspread.authorize(credentials)
+        ss = client.open_by_key(spreadsheetId)
+        sheetId = ss.worksheet(sheetName)._properties['sheetId']
+        body = {
+            "requests": [
+                {
+                    "mergeCells": {
+                        "mergeType": "MERGE_ALL",
+                        "range": {  # In this sample script, all cells of (пример)"A4:C4" of "Sheet1" are merged.
+                            "sheetId": sheetId,
+                            "startRowIndex": numb - 1,
+                            "endRowIndex": numb,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 3
+                        }
+                    }
+                }
+            ]
+        }
+        res = ss.batch_update(body)
+        # Задаёт ФОРМАТ ячейкам под дату(цвет и жир)
+        google_file.format(f'A{numb}', {'textFormat': {'bold': True}})  # Dелает жирным текст
+        google_file.format(f"A{numb}:C{numb}", {
+            "backgroundColor": {
+                "red": 0.750,
+                "green": 0.900,
+                "blue": 0.750,
+                "alpha": 1.0
+            },
+            "horizontalAlignment": "CENTER",
+            "textFormat": {
+                "foregroundColor": {
+                    "red": 0.0,
+                    "green": 0.0,
+                    "blue": 0.0
+                },
+                "fontSize": 10,
+                "bold": True
+            }
+        })
+
+        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        print((result_start.values()))
+        for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
+            if len(list(result_start.values())[0 + i]) == 3:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day']]])
+                time.sleep(2)
+            else:
+                google_file.update(f'A{numb + 1 + i}:C3000', [[list(result_start.values())[0 + i]['name'],
+                                                               list(result_start.values())[0 + i]['start_day'],
+                                                               list(result_start.values())[0 + i]['stop_day']]])
+                time.sleep(2)
 
 
 bot.polling(none_stop=True)
