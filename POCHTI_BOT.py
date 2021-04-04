@@ -144,7 +144,7 @@ def handle_text(message):
     print(numb)
 
 
-    if google_file.acell(f'A{numb}').value == list(result_start.values())[0]['data']:
+    if google_file.acell(f'A{numb}').value == now_time.strftime("%d.%m.%Y"):
         # Объеденяет ячейку в одну
         spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
         sheetName = "Лист номер один"
@@ -189,7 +189,7 @@ def handle_text(message):
             }
         })
 
-        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        google_file.update(f'A{numb}', now_time.strftime("%d.%m.%Y"))
         print((result_start.values()))
         for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
             if len(list(result_start.values())[0+i]) == 3:
@@ -201,7 +201,7 @@ def handle_text(message):
                                                                list(result_start.values())[0 + i]['start_day'],
                                                                list(result_start.values())[0 + i]['stop_day']]])
                 time.sleep(2)
-    elif google_file.acell(f'A{numb}').value != list(result_start.values())[0]['data']:
+    elif google_file.acell(f'A{numb}').value != now_time.strftime("%d.%m.%Y"):
         numb = (len(google_file.get_all_values()) + 1)
         # Объеденяет ячейку в одну
         spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
@@ -247,7 +247,7 @@ def handle_text(message):
             }
         })
 
-        google_file.update(f'A{numb}', [[list(result_start.values())[0]['data']]])
+        google_file.update(f'A{numb}', now_time.strftime("%d.%m.%Y"))
         print((result_start.values()))
         for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
             if len(list(result_start.values())[0 + i]) == 3:
