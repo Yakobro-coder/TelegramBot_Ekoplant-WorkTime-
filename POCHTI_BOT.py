@@ -3,6 +3,7 @@
 
 import time
 import datetime
+import pytz
 import telebot
 from telebot import types
 import gspread
@@ -77,7 +78,9 @@ dict_finish = {}
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     timestamp = message.date                            # Дата получения сообщение в виле unix
-    value = datetime.datetime.fromtimestamp(timestamp)  # Перевод их unix в нормФормат
+    unixi = datetime.datetime.fromtimestamp(timestamp)  # Перевод их unix в нормФормат
+    value = unixi.now(pytz.timezone('Europe/Moscow'))
+    value.date()
 
 
     dict_one = {}
