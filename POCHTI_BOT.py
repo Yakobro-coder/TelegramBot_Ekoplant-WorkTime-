@@ -124,10 +124,15 @@ def handle_text(message):
 
     now_time = datetime.datetime.today()
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
-    open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8").write(
-        f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
+    with open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8") as backup:
+        backup.write(f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
+
+    update_sheets()
 
 
+numb = 2
+def update_sheets():
+    now_time = datetime.datetime.today()
     gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
@@ -142,8 +147,8 @@ def handle_text(message):
     google_file = gc.open("Экоплант(WorkBot)").sheet1
 
     # Показывает номер первой пустой строки проверев документ.
-    numb = 2
     # numb = (len(google_file.get_all_values()) + 1)
+    global numb
     print(numb)
 
 
@@ -204,8 +209,10 @@ def handle_text(message):
                                                                list(result_start.values())[0 + i]['start_day'],
                                                                list(result_start.values())[0 + i]['stop_day']]])
                 time.sleep(2)
+
     elif google_file.acell(f'A{numb}').value != now_time.strftime("%d.%m.%Y"):
         numb = (len(google_file.get_all_values()) + 1)
+        print(numb)
         # Объеденяет ячейку в одну
         spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
         sheetName = "Лист номер один"
