@@ -129,8 +129,12 @@ def handle_text(message):
 
     update_sheets()
 
-
-numb = 2
+# Записываем номер строки в файл, что бы при подении всегда помнить где была последння
+# строка с датой(та что зелённая)
+# Здесь мы берём число из файла(там всегда цифра) и str переводим в int
+with open(f'Number_line.txt', 'r', encoding="utf-8") as doc:
+    numb = doc.read()
+    numb = int(numb)
 def update_sheets():
     now_time = datetime.datetime.today()
     gc = gspread.service_account(filename='pythontelegrabotektoplan-dbb9bff2c140.json')
@@ -212,6 +216,8 @@ def update_sheets():
 
     elif google_file.acell(f'A{numb}').value != now_time.strftime("%d.%m.%Y"):
         numb = (len(google_file.get_all_values()) + 1)
+        with open(f'Number_line.txt', 'w', encoding="utf-8") as doc:
+            doc.write(str(numb))
         print(numb)
         # Объеденяет ячейку в одну
         spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
