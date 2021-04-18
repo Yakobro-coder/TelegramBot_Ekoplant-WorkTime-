@@ -76,6 +76,7 @@ def start(message):
 result_start = {}
 result_stop = {}
 dict_finish = {}
+all_true_time = ''
 
 def clean_result_start():
     global result_start
@@ -88,6 +89,9 @@ def handle_text(message):
     unixi = datetime.datetime.fromtimestamp(timestamp)  # Перевод их unix в нормФормат
     value = unixi.now(pytz.timezone('Europe/Moscow'))
     value.date()
+
+    global all_true_time
+    all_true_time = value
 
 
     dict_one = {}
@@ -137,10 +141,9 @@ def handle_text(message):
                         result_start.update(res)  # <-- Итоговый словарь для обработки в Google Sheets
         print(result_start)
 
-    now_time = datetime.datetime.today()
     # Бэкап всех данных в Файл.txt при каждом нажатии, отдельной стракой.
-    with open(f'Work_time_backup_{now_time.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8") as backup:
-        backup.write(f'\n{now_time.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
+    with open(f'Work_time_backup_{value.strftime("%d.%m.%Y")}.txt', 'a', encoding="utf-8") as backup:
+        backup.write(f'\n{value.strftime("%d.%m.%Y %H-%M-%S")} - {result_start}')
 
     update_sheets()
 
@@ -171,7 +174,7 @@ def update_sheets():
     print(numb)
 
 
-    if google_file.acell(f'A{numb}').value == now_time.strftime("%d.%m.%Y"):
+    if google_file.acell(f'A{numb}').value == all_true_time.strftime("%d.%m.%Y"):
         # Объеденяет ячейку в одну
         spreadsheetId = "1GjhzvK6vgP0m8EYrcbPeYuJOfYy40GUQ6DqLKqxV838"
         sheetName = "Лист номер один"
@@ -216,7 +219,7 @@ def update_sheets():
             }
         })
 
-        google_file.update(f'A{numb}', now_time.strftime("%d.%m.%Y"))
+        google_file.update(f'A{numb}', all_true_time.strftime("%d.%m.%Y"))
         print((result_start.values()))
         for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
             if len(list(result_start.values())[0+i]) == 3:
@@ -229,7 +232,7 @@ def update_sheets():
                                                                list(result_start.values())[0 + i]['stop_day']]])
                 time.sleep(2)
 
-    elif google_file.acell(f'A{numb}').value != now_time.strftime("%d.%m.%Y"):
+    elif google_file.acell(f'A{numb}').value != all_true_time.strftime("%d.%m.%Y"):
         numb = (len(google_file.get_all_values()) + 1)
         with open(f'Number_line.txt', 'w', encoding="utf-8") as doc:
             doc.write(str(numb))
@@ -278,7 +281,7 @@ def update_sheets():
             }
         })
 
-        google_file.update(f'A{numb}', now_time.strftime("%d.%m.%Y"))
+        google_file.update(f'A{numb}', all_true_time.strftime("%d.%m.%Y"))
         print((result_start.values()))
         for i in range(0, len(result_start)):  # Вроде как записвает все данные в Google Sheets
             if len(list(result_start.values())[0 + i]) == 3:
