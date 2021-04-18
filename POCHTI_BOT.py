@@ -28,8 +28,11 @@ helper_text = """Я ЭкоплантБОТ для учёта рабочего в
 Хорошего дня!
 """
 
+# Чтение токена из файла
+with open('token.txt', encoding='utf-8') as f:
+    TOKEN = f.read()
 
-TOKEN = '1612615932:AAEEagVHgJohJWf4FyPDm6vXzhXjZby5exs'
+
 bot = telebot.TeleBot(TOKEN)
 
 
@@ -86,6 +89,10 @@ def handle_text(message):
     dict_one = {}
     text_vivod = f'Отлично, вы приступили к работе в {value.strftime("%H:%M:%S")}!' \
                  f' Не забудьте в конце дня, отметиться о завершении рабочего дня.'
+
+    if message.text == 'Приступить к работе' and value.strftime("%d.%m.%Y") != result_start[message.chat.id]['data']:
+        global result_start
+        result_start = {}
 
     if message.text == 'Приступить к работе' and message.chat.id not in result_start.keys():
         source_language_menu = types.ReplyKeyboardMarkup(True, True)
