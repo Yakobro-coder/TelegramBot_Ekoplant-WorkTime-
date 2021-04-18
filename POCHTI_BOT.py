@@ -77,6 +77,10 @@ result_start = {}
 result_stop = {}
 dict_finish = {}
 
+def clean_result_start():
+    global result_start
+    result_start = {}
+
 
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
@@ -91,8 +95,7 @@ def handle_text(message):
                  f' Не забудьте в конце дня, отметиться о завершении рабочего дня.'
 
     if message.text == 'Приступить к работе' and value.strftime("%d.%m.%Y") != result_start[message.chat.id]['data']:
-        global result_start
-        result_start = {}
+        clean_result_start()
 
     if message.text == 'Приступить к работе' and message.chat.id not in result_start.keys():
         source_language_menu = types.ReplyKeyboardMarkup(True, True)
