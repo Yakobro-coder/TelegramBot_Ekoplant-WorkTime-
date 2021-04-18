@@ -94,8 +94,13 @@ def handle_text(message):
     text_vivod = f'Отлично, вы приступили к работе в {value.strftime("%H:%M:%S")}!' \
                  f' Не забудьте в конце дня, отметиться о завершении рабочего дня.'
 
-    if message.text == 'Приступить к работе' and value.strftime("%d.%m.%Y") != result_start[message.chat.id]['data']:
-        clean_result_start()
+    # Если пользователя(id) нету в словоре, то возникнет ошибка при поиски даты пользователя по ключу.
+    # Обход ошибки KeyError
+    try:
+        if message.text == 'Приступить к работе' and value.strftime("%d.%m.%Y") != result_start[message.chat.id]['data']:
+            clean_result_start()
+    except KeyError:
+        pass
 
     if message.text == 'Приступить к работе' and message.chat.id not in result_start.keys():
         source_language_menu = types.ReplyKeyboardMarkup(True, True)
